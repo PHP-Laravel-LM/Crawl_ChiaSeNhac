@@ -1,29 +1,14 @@
 <?php
 
-namespace App\Helpers;
+namespace App\Helpers\Crawler;
 
-require './vendor/autoload.php';
-require './app/Helpers/simple_html_dom.php';
+require_once './app/Helpers/simple_html_dom.php';
 
-use GuzzleHttp\Client;
-
+use App\Helpers\Crawler\Crawler;
 use function App\Helper\str_get_html;
 
-class Crawler
+class CrawlerCSN extends Crawler
 {
-    private $client = null;
-
-    public function __construct()
-    {
-        $this->client = new Client();
-    }
-
-    public function getSourceFromURL(string $urlSong, $params = [])
-    {
-        $request = $this->client->request('GET', $urlSong, $params);
-        $response = $request->getBody();
-        return $response->getContents();
-    }
 
     public function findSong(string $name)
     {
@@ -38,21 +23,22 @@ class Crawler
         ]), true);
     }
 
-    public function getLinkSong($source) 
+    public function getLinkDowloadSong(string $urlSong)
     {
         $info = [];
+        $source = $this->getSourceFromURL($urlSong);
         $html = str_get_html($source);
         // Get info song
         $info['name'] = $html->find('.card-title')[2]->plaintext;
         // Get link song in block
         $block_downloadFile = $html->find('.download_item');
         $info['links'] = [];
-        foreach ($block_downloadFile as $file)
-        {
+        foreach ($block_downloadFile as $file) {
             $quality_block = $file->last_child();
-            $quality = 'unknown';
-            if ($quality_block->tag === 'span')
+            $quality = 'M4A 32kbps';
+            if ($quality_block->tag === 'span') {
                 $quality = $quality_block->plaintext;
+            }
             $href = $file->href;
             array_push($info['links'], [
                 'quality'   => $quality,
